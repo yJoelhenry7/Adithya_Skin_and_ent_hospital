@@ -1,11 +1,45 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
 import { ChevronDown, MapPin } from "lucide-react";
 import { CallButton, WhatsAppButton } from "@/components/cta-buttons";
 import { clinic } from "@/lib/clinic";
+import { cn } from "@/lib/utils";
 
 const ease = [0.22, 1, 0.36, 1] as const;
+const SLIDE_MS = 4800;
+
+const slides = [
+  {
+    letter: "E",
+    word: "Ear",
+    detail:
+      "Safe wax cleaning and gentle care when hearing feels muffled or an ear feels blocked.",
+    image: "/hero/ear.jpg",
+    alt: "A doctor examining a patient's ear",
+    position: "object-[72%_center]",
+  },
+  {
+    letter: "N",
+    word: "Nose",
+    detail:
+      "Attention for congestion, sinus pressure and the strain of breathing through a blocked nose.",
+    image: "/hero/nose.jpg",
+    alt: "Close profile of a person's nose",
+    position: "object-[center_52%]",
+  },
+  {
+    letter: "T",
+    word: "Throat",
+    detail:
+      "Care for sore throats, voice strain and tonsil discomfort, for adults and children.",
+    image: "/hero/throat.jpg",
+    alt: "A doctor examining a patient's throat",
+    position: "object-[center_35%]",
+  },
+] as const;
 
 function Orb({
   className,
@@ -27,6 +61,16 @@ function Orb({
 
 export function Hero() {
   const reduce = useReducedMotion();
+  const [index, setIndex] = useState(0);
+  const slide = slides[index];
+
+  useEffect(() => {
+    if (reduce) return;
+    const id = window.setTimeout(() => {
+      setIndex((current) => (current + 1) % slides.length);
+    }, SLIDE_MS);
+    return () => window.clearTimeout(id);
+  }, [index, reduce]);
 
   const item = (i: number) => ({
     initial: reduce ? false : { opacity: 0, y: 36 },
@@ -65,20 +109,10 @@ export function Hero() {
           </defs>
           <rect width="100%" height="100%" fill="url(#dots)" className="text-ink" />
         </svg>
-        <motion.div
-          className="absolute right-[6%] top-1/2 hidden size-[34rem] -translate-y-1/2 lg:block"
-          animate={reduce ? undefined : { rotate: 360 }}
-          transition={{ duration: 120, repeat: Infinity, ease: "linear" }}
-        >
-          <div className="absolute inset-0 rounded-full border border-ink/10" />
-          <div className="absolute inset-12 rounded-full border border-dashed border-rose/40" />
-          <div className="absolute inset-28 rounded-full border border-ink/8" />
-          <span className="absolute left-1/2 top-0 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-rose" />
-          <span className="absolute bottom-12 right-12 size-2.5 rounded-full bg-ink" />
-        </motion.div>
       </div>
 
-      <div className="mx-auto w-full max-w-6xl px-5 pb-24 pt-32">
+      <div className="mx-auto grid w-full max-w-6xl items-center gap-8 px-5 pb-24 pt-28 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-14 lg:pt-32">
+        <div className="lg:order-1">
         <motion.p
           {...item(0)}
           className="mb-6 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-ink/55"
@@ -87,33 +121,140 @@ export function Hero() {
           Ravulapalem, Andhra Pradesh
         </motion.p>
 
-        <motion.h1
-          {...item(1)}
-          className="font-display text-[clamp(3.6rem,13vw,10.5rem)] font-semibold leading-[0.88] tracking-tight text-ink"
-        >
-          ADITHYA
-        </motion.h1>
+        <motion.div {...item(1)}>
+          <h1 className="sr-only">Ear, nose and throat care in Ravulapalem</h1>
+
+          <div
+            className="relative min-h-[15.5rem]"
+            aria-roledescription="carousel"
+            aria-label="Ear, nose and throat"
+          >
+            <p className="sr-only" aria-live="polite">
+              {slide.word}. {slide.detail}
+            </p>
+
+            {slides.map((entry, i) => {
+              const active = i === index;
+              return (
+                <motion.div
+                  key={entry.letter}
+                  className={cn(
+                    active ? "relative" : "pointer-events-none absolute inset-0",
+                  )}
+                  initial={false}
+                  animate={{ opacity: active ? 1 : 0 }}
+                  transition={{ duration: reduce ? 0 : 0.7, ease }}
+                  aria-hidden={!active}
+                >
+                  <div className="flex items-end gap-3 sm:gap-6">
+                    <p
+                      aria-hidden
+                      className="overflow-hidden font-display text-[clamp(5.25rem,16vw,8.5rem)] font-semibold leading-[0.82] tracking-tight text-ink"
+                    >
+                      {entry.letter}
+                    </p>
+                    <p className="mb-1 font-display text-[clamp(2rem,5vw,3.6rem)] font-light italic leading-none text-rose sm:mb-3">
+                      {entry.word}
+                    </p>
+                  </div>
+                  <p className="mt-5 max-w-md text-lg leading-relaxed text-ink/65">
+                    {entry.detail}
+                  </p>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          <div
+            className="mt-6 flex items-center gap-5"
+            role="tablist"
+            aria-label="Choose a specialty"
+          >
+            {slides.map((entry, i) => {
+              const active = i === index;
+              return (
+                <button
+                  key={entry.letter}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  aria-label={entry.word}
+                  onClick={() => setIndex(i)}
+                  className="group flex items-center gap-3"
+                >
+                  <span
+                    className={cn(
+                      "font-display text-xl font-semibold transition-colors",
+                      active ? "text-rose" : "text-ink/30 group-hover:text-ink/70",
+                    )}
+                  >
+                    {entry.letter}
+                  </span>
+                  <span className="relative h-px w-12 overflow-hidden bg-ink/15 sm:w-16">
+                    {active && !reduce ? (
+                      <motion.span
+                        key={index}
+                        className="absolute inset-y-0 left-0 w-full origin-left bg-rose"
+                        initial={{ scaleX: 0 }}
+                        animate={{ scaleX: 1 }}
+                        transition={{ duration: SLIDE_MS / 1000, ease: "linear" }}
+                      />
+                    ) : (
+                      <span
+                        className={cn(
+                          "absolute inset-y-0 left-0 w-full origin-left",
+                          active ? "scale-x-100 bg-rose" : "scale-x-0",
+                        )}
+                      />
+                    )}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </motion.div>
 
         <motion.p
           {...item(2)}
-          className="mt-3 font-display text-[clamp(1.4rem,4vw,3rem)] font-light italic text-ink/85"
-        >
-          Skin <span className="text-rose">&amp;</span> ENT Hospital
-        </motion.p>
-
-        <motion.p
-          {...item(3)}
-          className="mt-8 max-w-md text-lg leading-relaxed text-ink/65"
+          className="mt-6 max-w-md text-lg leading-relaxed text-ink/65"
         >
           {clinic.tagline} Open every day, {clinic.hours.time}.
         </motion.p>
 
-        <motion.div {...item(4)} className="mt-10 flex flex-wrap gap-3">
+        <motion.div {...item(3)} className="mt-6 flex flex-wrap gap-3">
           <WhatsAppButton />
           <CallButton
             variant="outline"
             className="border-ink/20 bg-white text-ink hover:bg-secondary hover:text-ink"
           />
+        </motion.div>
+        </div>
+
+        <motion.div
+          {...item(1)}
+          className="relative order-first h-48 overflow-hidden rounded-[1.75rem] bg-secondary shadow-[0_24px_70px_-36px_rgba(17,17,17,0.55)] sm:h-64 lg:order-2 lg:h-[34rem]"
+        >
+          {slides.map((entry, i) => {
+            const active = i === index;
+            return (
+              <motion.div
+                key={entry.letter}
+                className="absolute inset-0"
+                initial={false}
+                animate={{ opacity: active ? 1 : 0, scale: active || reduce ? 1 : 1.05 }}
+                transition={{ duration: reduce ? 0 : 0.7, ease }}
+              >
+                <Image
+                  src={entry.image}
+                  alt={active ? entry.alt : ""}
+                  fill
+                  priority={i === 0}
+                  sizes="(min-width: 1024px) 42vw, 100vw"
+                  className={cn("object-cover", entry.position)}
+                />
+              </motion.div>
+            );
+          })}
         </motion.div>
       </div>
 
